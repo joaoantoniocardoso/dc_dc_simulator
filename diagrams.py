@@ -32,18 +32,15 @@ class Diagrams(QWidget):
         self.setWindowTitle("Time diagrams")
 
     def plot(self, file_name):
-        # reading input file
-        npy_file = open(file_name, "rb")
-        m = load(npy_file)
-        while npy_file.read(1):
-            try:
-                npy_file.seek(-1, 1)
-                n = load(npy_file)
-                m = column_stack((m, n))
-            except EOFError or IOError:
-                break
-        npy_file.close()
-
+        with open(file_name, "rb") as npy_file:
+            m = load(npy_file)
+            while npy_file.read(1):
+                try:
+                    npy_file.seek(-1, 1)
+                    n = load(npy_file)
+                    m = column_stack((m, n))
+                except EOFError or IOError:
+                    break
         time_coeff = 10 ** (ceil(log10(1.0 / float(max(m[0]))) / 3) * 3)
         time_min = float(min(m[0]))
         time_max = float(max(m[0]))
@@ -93,9 +90,9 @@ class Diagrams(QWidget):
                 ["{:.1f}".format(value) for value in y_arange],
             )
 
-            t_max = float(max(m[0]))
-            t_min = float(min(m[0]))
             if i == m.shape[0] - 1:
+                t_max = float(max(m[0]))
+                t_min = float(min(m[0]))
                 time_arange = arange(
                     float(t_min * time_coeff),
                     float((t_max + (t_max - t_min) / 20) * time_coeff),
@@ -117,7 +114,6 @@ class Diagrams(QWidget):
                     + dictionary[log10(coeff)]
                     + "\mbox{A}]$"
                 )
-                self.subplots[i - 1].set_ylabel("$%s$" % label)
             else:
                 label = sympy.latex(
                     "$v_{C"
@@ -126,8 +122,7 @@ class Diagrams(QWidget):
                     + dictionary[log10(coeff)]
                     + "\mbox{V}]$"
                 )
-                self.subplots[i - 1].set_ylabel("$%s$" % label)
-
+            self.subplots[i - 1].set_ylabel("$%s$" % label)
         self.subplots[i - 1].set_xlabel(
             r"$t \; [" + dictionary[log10(time_coeff)] + "\mbox{s}]$"
         )

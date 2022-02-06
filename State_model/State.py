@@ -174,7 +174,7 @@ class State:
                         result += sign(element) * independent_source[abs(element) - 1]
 
                     # make vector for multiplying with state variables
-                    matrix = [[0 for dummy_2 in range(len(self.__A))]]
+                    matrix = [[0 for _dummy_2 in range(len(self.__A))]]
                     for element in control[1][dummy]:
                         matrix[0][abs(element) - 1] = np.sign(element)
 

@@ -10,20 +10,17 @@ dictionary = {0: "", 3: "\mbox{m}", 6: "\mu", 9: "\mbox{n}", 12: "\mbox{p}"}
 def plot_data(file_names, horizons):
     subplots = []
     fig = 0
-    index = 0
-    for file_name in file_names:
-        npy_file = open(file_name, "rb")
-        m = load(npy_file)
+    for index, file_name in enumerate(file_names):
+        with open(file_name, "rb") as npy_file:
+            m = load(npy_file)
 
-        while npy_file.read(1):
+            while npy_file.read(1):
 
-            try:
-                npy_file.seek(-1, 1)
-                m = column_stack((m, load(npy_file)))
-            except EOFError or IOError:
-                break
-
-        npy_file.close()
+                try:
+                    npy_file.seek(-1, 1)
+                    m = column_stack((m, load(npy_file)))
+                except EOFError or IOError:
+                    break
 
         if file_name == file_names[0]:
             close("all")
@@ -51,8 +48,8 @@ def plot_data(file_names, horizons):
 
                 if i == m.shape[0] - 1:
 
-                    t_max = float(max(m[0]))
                     t_min = float(min(m[0]))
+                    t_max = float(max(m[0]))
                     time_arange = arange(
                         float(t_min * time_coeff),
                         float((t_max + (t_max - t_min) / 20) * time_coeff),
@@ -63,8 +60,6 @@ def plot_data(file_names, horizons):
                         ["{:.1f}".format(t) for t in time_arange]
                     )
                 else:
-                    t_max = float(max(m[0]))
-                    t_min = float(min(m[0]))
                     subplots[i - 1].set_xticks(linspace(time_min, time_max, 11))
                     subplots[i - 1].set_xticklabels([])
 
@@ -111,8 +106,6 @@ def plot_data(file_names, horizons):
             lab = sympy.latex("$N =" + str(horizons[index]) + "$")
 
             subplots[i - 1].plot(m[0], m[i], label=lab)
-
-        index += 1
 
     subplots[0].legend(
         loc="lower left",

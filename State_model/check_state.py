@@ -117,12 +117,13 @@ def find_dicm_cutsets(cutsets, nodes, dicm_nodes):
                 or isinstance(element, Current_source)
                 or isinstance(element, Inductor)
             )
-        if dummy:
-            if any(isinstance(element, Switch) for element in cutset) and any(
-                isinstance(element, Inductor) for element in cutset
-            ):
-                new_cutsets.append(list(cutset))
-                dicm_nodes.append(nodes[cutsets.index(cutset)])
+        if (
+            dummy
+            and any(isinstance(element, Switch) for element in cutset)
+            and any(isinstance(element, Inductor) for element in cutset)
+        ):
+            new_cutsets.append(list(cutset))
+            dicm_nodes.append(nodes[cutsets.index(cutset)])
 
     return new_cutsets
 
@@ -141,14 +142,15 @@ def find_dcvm_loops(loops, nodes, dcvm_nodes):
                 or isinstance(element, Voltage_source)
                 or isinstance(element, Capacitor)
             )
-        if dummy:
-            if any(isinstance(element, Switch) for element in loop) and any(
-                isinstance(element, Capacitor) for element in loop
-            ):
-                loop.sort()
-                if not loop in new_loops:
-                    new_loops.append(list(loop))
-                    dcvm_nodes.append(list(nodes[loops.index(loop)]))
+        if (
+            dummy
+            and any(isinstance(element, Switch) for element in loop)
+            and any(isinstance(element, Capacitor) for element in loop)
+        ):
+            loop.sort()
+            if loop not in new_loops:
+                new_loops.append(list(loop))
+                dcvm_nodes.append(list(nodes[loops.index(loop)]))
 
     return new_loops
 
@@ -159,7 +161,7 @@ def check_control_scheme(controlled_switches, on_state, off_state, index):
     finds if a control scheme is satisfied
     """
     index = index & controlled_switches
-    return (index == on_state) or (index == off_state) or (index == 0)
+    return index in [on_state, off_state, 0]
 
 
 # 2a) functions for eliminating states with loops of closed switches and voltage sources
@@ -173,14 +175,13 @@ def find_voltage_loops(loops):
     for loop in loops:
         dummy = True
         for element in loop:
-            dummy = dummy and (
-                isinstance(element, Switch) or isinstance(element, Voltage_source)
-            )
-        if dummy:
-            if any(isinstance(element, Switch) for element in loop) and any(
-                isinstance(element, Voltage_source) for element in loop
-            ):
-                new_loops.append(list(loop))
+            dummy = dummy and isinstance(element, (Switch, Voltage_source))
+        if (
+            dummy
+            and any(isinstance(element, Switch) for element in loop)
+            and any(isinstance(element, Voltage_source) for element in loop)
+        ):
+            new_loops.append(list(loop))
 
     return new_loops
 
@@ -193,9 +194,10 @@ def check_voltage_loops(index, voltage_loops):
     for loop in voltage_loops:
         loop_index = True
         for element in loop:
-            if isinstance(element, Switch):
-                if not (2 ** (element.get_index() - 1) & index):
-                    loop_index = False
+            if isinstance(element, Switch) and not (
+                2 ** (element.get_index() - 1) & index
+            ):
+                loop_index = False
 
         exists = exists or loop_index
     return exists
@@ -212,14 +214,13 @@ def find_current_cutsets(cutsets):
     for cutset in cutsets:
         dummy = True
         for element in cutset:
-            dummy = dummy and (
-                isinstance(element, Switch) or isinstance(element, Current_source)
-            )
-        if dummy:
-            if any(isinstance(element, Switch) for element in cutset) and any(
-                isinstance(element, Current_source) for element in cutset
-            ):
-                new_cutsets.append(list(loop))
+            dummy = dummy and isinstance(element, (Switch, Current_source))
+        if (
+            dummy
+            and any(isinstance(element, Switch) for element in cutset)
+            and any(isinstance(element, Current_source) for element in cutset)
+        ):
+            new_cutsets.append(list(loop))
 
     return new_cutsets
 
@@ -232,9 +233,10 @@ def check_current_cutsets(index, current_cutsets):
     for loop in current_cutsets:
         cutset_index = True
         for element in cutset:
-            if isinstance(element, Switch):
-                if not (2 ** (element.get_index() - 1) & index):
-                    cutset_index = False
+            if isinstance(element, Switch) and not (
+                2 ** (element.get_index() - 1) & index
+            ):
+                cutset_index = False
 
         exists = exists or cutset_index
 
@@ -416,7 +418,7 @@ def form_cutset_nodes(nodes):
     """
     result = []
 
-    for i in range(0, len(nodes)):
+    for i in range(len(nodes)):
         result.append(list([nodes[i]]))
         temp = []
         for sublist in result:
@@ -522,20 +524,19 @@ def find_loop(beginning_node, node, nodes, loop_collection, node_collection, tre
                 tree.add_subelement(element)
             current_tree = new_tree
             loop = []
-            loop_nodes = []
-            loop_nodes.append(beginning_node)
+            loop_nodes = [beginning_node]
             cont = True
 
             while cont:
                 loop.append(current_tree.get_element())
                 loop_nodes.append(current_tree.get_node())
                 current_tree = current_tree.get_root()
-                if current_tree == None:
+                if current_tree is None:
 
                     cont = False
-                # loop.sort()
+                    # loop.sort()
 
-            if not (loop in loop_collection):
+            if loop not in loop_collection:
                 loop_collection.append(loop)
                 node_collection.append(loop_nodes)
 
@@ -551,17 +552,16 @@ def is_ClS(loops, index):
                 or isinstance(element, Voltage_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                any(isinstance(element, Capacitor) for element in loop)
-                and any(isinstance(element, Switch) for element in loop)
-                and all(
-                    (element.get_index() & index)
-                    for element in loop
-                    if isinstance(element, Switch)
-                )
-            ):
-                return dummy
+        if dummy and (
+            any(isinstance(element, Capacitor) for element in loop)
+            and any(isinstance(element, Switch) for element in loop)
+            and all(
+                (element.get_index() & index)
+                for element in loop
+                if isinstance(element, Switch)
+            )
+        ):
+            return dummy
     return False
 
 
@@ -575,17 +575,16 @@ def is_ClnS(loops, index):
                 or isinstance(element, Voltage_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                any(isinstance(element, Capacitor) for element in loop)
-                and any(isinstance(element, Switch) for element in loop)
-                and all(
-                    (element.get_index() & ~index)
-                    for element in loop
-                    if isinstance(element, Switch)
-                )
-            ):
-                return dummy
+        if dummy and (
+            any(isinstance(element, Capacitor) for element in loop)
+            and any(isinstance(element, Switch) for element in loop)
+            and all(
+                (element.get_index() & ~index)
+                for element in loop
+                if isinstance(element, Switch)
+            )
+        ):
+            return dummy
     return False
 
 
@@ -600,25 +599,25 @@ def is_LlS(loops, index, capacitors):
                 or isinstance(element, Voltage_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                (
-                    any(isinstance(element, Inductor) for element in loop)
-                    and any(isinstance(element, Switch) for element in loop)
-                    and all(
-                        (element.get_index() & index)
-                        for element in loop
-                        if isinstance(element, Switch)
-                    )
-                )
+        if (
+            dummy
+            and (
+                any(isinstance(element, Inductor) for element in loop)
+                and any(isinstance(element, Switch) for element in loop)
                 and all(
-                    (element not in capacitors)
+                    (element.get_index() & index)
                     for element in loop
-                    if isinstance(element, Capacitor)
+                    if isinstance(element, Switch)
                 )
-                and sum(1 for element in loop if isinstance(element, Inductor)) == 1
-            ):
-                return dummy
+            )
+            and all(
+                (element not in capacitors)
+                for element in loop
+                if isinstance(element, Capacitor)
+            )
+            and sum(isinstance(element, Inductor) for element in loop) == 1
+        ):
+            return dummy
 
     return False
 
@@ -634,25 +633,25 @@ def is_LlnS(loops, index, capacitors):
                 or isinstance(element, Voltage_source)
                 or isinstance(element, Capacitor)
             )
-        if dummy:
-            if (
-                (
-                    any(isinstance(element, Inductor) for element in loop)
-                    and any(isinstance(element, Switch) for element in loop)
-                    and all(
-                        (element.get_index() & ~index)
-                        for element in loop
-                        if isinstance(element, Switch)
-                    )
-                )
+        if (
+            dummy
+            and (
+                any(isinstance(element, Inductor) for element in loop)
+                and any(isinstance(element, Switch) for element in loop)
                 and all(
-                    (element not in capacitors)
+                    (element.get_index() & ~index)
                     for element in loop
-                    if isinstance(element, Capacitor)
+                    if isinstance(element, Switch)
                 )
-                and sum(1 for element in loop if isinstance(element, Inductor)) == 1
-            ):
-                return dummy
+            )
+            and all(
+                (element not in capacitors)
+                for element in loop
+                if isinstance(element, Capacitor)
+            )
+            and sum(isinstance(element, Inductor) for element in loop) == 1
+        ):
+            return dummy
     return False
 
 
@@ -666,17 +665,16 @@ def is_LcS(cutsets, index):
                 or isinstance(element, Current_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                any(isinstance(element, Inductor) for element in cutset)
-                and any(isinstance(element, Switch) for element in cutset)
-                and all(
-                    (element.get_index() & index)
-                    for element in cutset
-                    if isinstance(element, Switch)
-                )
-            ):
-                return dummy
+        if dummy and (
+            any(isinstance(element, Inductor) for element in cutset)
+            and any(isinstance(element, Switch) for element in cutset)
+            and all(
+                (element.get_index() & index)
+                for element in cutset
+                if isinstance(element, Switch)
+            )
+        ):
+            return dummy
     return False
 
 
@@ -690,17 +688,16 @@ def is_LcnS(cutsets, index):
                 or isinstance(element, Current_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                any(isinstance(element, Inductor) for element in cutset)
-                and any(isinstance(element, Switch) for element in cutset)
-                and all(
-                    (element.get_index() & ~index)
-                    for element in cutset
-                    if isinstance(element, Switch)
-                )
-            ):
-                return dummy
+        if dummy and (
+            any(isinstance(element, Inductor) for element in cutset)
+            and any(isinstance(element, Switch) for element in cutset)
+            and all(
+                (element.get_index() & ~index)
+                for element in cutset
+                if isinstance(element, Switch)
+            )
+        ):
+            return dummy
     return False
 
 
@@ -715,27 +712,27 @@ def is_CcS(cutsets, index, inductors):
                 or isinstance(element, Current_source)
                 or isinstance(element, Switch)
             )
-        if dummy:
-            if (
-                (
-                    any(isinstance(element, Capacitor) for element in cutset)
-                    and any(isinstance(element, Switch) for element in cutset)
-                    and all(
-                        (element.get_index() & index)
-                        for element in cutset
-                        if isinstance(element, Switch)
-                    )
-                )
+        if (
+            dummy
+            and (
+                any(isinstance(element, Capacitor) for element in cutset)
+                and any(isinstance(element, Switch) for element in cutset)
                 and all(
-                    (element not in inductors)
+                    (element.get_index() & index)
                     for element in cutset
-                    if isinstance(element, Inductor)
+                    if isinstance(element, Switch)
                 )
-                and sum(1 for element in cutset if isinstance(element, Capacitor)) == 1
-            ):
-                for element in cutset:
-                    print(str(element))
-                return dummy
+            )
+            and all(
+                (element not in inductors)
+                for element in cutset
+                if isinstance(element, Inductor)
+            )
+            and sum(isinstance(element, Capacitor) for element in cutset) == 1
+        ):
+            for element in cutset:
+                print(element)
+            return dummy
 
     return False
 
@@ -751,25 +748,25 @@ def is_CcnS(cutsets, index, inductors):
                 or isinstance(element, Current_source)
                 or isinstance(element, Inductor)
             )
-        if dummy:
-            if (
-                (
-                    any(isinstance(element, Capacitor) for element in cutset)
-                    and any(isinstance(element, Switch) for element in cutset)
-                    and all(
-                        (element.get_index() & ~index)
-                        for element in cutset
-                        if isinstance(element, Switch)
-                    )
-                )
+        if (
+            dummy
+            and (
+                any(isinstance(element, Capacitor) for element in cutset)
+                and any(isinstance(element, Switch) for element in cutset)
                 and all(
-                    (element not in inductors)
+                    (element.get_index() & ~index)
                     for element in cutset
-                    if isinstance(element, Inductor)
+                    if isinstance(element, Switch)
                 )
-                and sum(1 for element in cutset if isinstance(element, Capacitor)) == 1
-            ):
-                return dummy
+            )
+            and all(
+                (element not in inductors)
+                for element in cutset
+                if isinstance(element, Inductor)
+            )
+            and sum(isinstance(element, Capacitor) for element in cutset) == 1
+        ):
+            return dummy
     return False
 
 
@@ -816,7 +813,7 @@ def get_dicm_inductors(cutsets):
     inductors = []
     for cutset in cutsets:
         for element in cutset:
-            if isinstance(element, Inductor) and not (element in inductors):
+            if isinstance(element, Inductor) and element not in inductors:
                 inductors.append(element)
 
     return inductors
@@ -829,7 +826,7 @@ def get_dcvm_capacitors(loops):
     capacitors = []
     for loop in loops:
         for element in loop:
-            if isinstance(element, Capacitor) and not (element in capacitors):
+            if isinstance(element, Capacitor) and element not in capacitors:
                 capacitors.append(element)
 
     return capacitors

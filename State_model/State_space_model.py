@@ -51,7 +51,7 @@ class State_space_model:
         """
         self.__state_indexes = []
 
-        for i in range(0, 2 ** self.__system.get_number_switches()):
+        for i in range(2 ** self.__system.get_number_switches()):
             if (
                 check_state.check_control_scheme(
                     self.__system.get_controlled_switches(),

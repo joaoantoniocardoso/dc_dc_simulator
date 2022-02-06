@@ -15,7 +15,8 @@ from PyQt5.QtWidgets import *
 from ast import literal_eval
 
 from State_model import *
-#from Controllers import *
+
+# from Controllers import *
 from parser import *
 
 model = System()
@@ -74,9 +75,9 @@ class Window(QMainWindow):
 
         # control parameters
         self.on_switches = 0
-        self.on_switches_list = list()
+        self.on_switches_list = []
         self.off_switches = 0
-        self.off_switches_list = list()
+        self.off_switches_list = []
         self.output = []
 
         self.control_method = None
@@ -240,22 +241,21 @@ class Window(QMainWindow):
             self.comboBox.setEnabled(False)
             self.statusBar.showMessage("Control method chosen.", 2000)
             self.control_method = text
-            if (text == "Constant frequency and duty ratio") or (
-                text == "Nonlinear Model Predictive Controller"
-            ):
+            if text in [
+                "Constant frequency and duty ratio",
+                "Nonlinear Model Predictive Controller",
+            ]:
                 self.label.setVisible(True)
                 self.duty_ratio_line.setVisible(True)
             else:
                 self.button_controller.setVisible(True)
                 self.discretization_method_box.setVisible(True)
-            if self.open_file != None:
-                self.check_control()
-            else:
+            if self.open_file is None:
                 self.statusBar.showMessage(
                     "Choose input netlist file in File -> Open file.", 2000
                 )
-        else:
-            pass
+            else:
+                self.check_control()
 
     # functions for control formulation
     def check_control(self):
@@ -538,8 +538,6 @@ class Window(QMainWindow):
             self.diagram.close()
             time.sleep(1)
             sys.exit()
-        else:
-            pass
 
 
 def run():

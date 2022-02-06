@@ -89,17 +89,12 @@ class System:
         return self.__switches
 
     def get_switches_indexes(self):
-        lst = []
-        for switch in self.__switches:
-            lst.append(switch.get_index())
-        return lst
+        return [switch.get_index() for switch in self.__switches]
 
     def get_controlled_switches_indexes(self):
-        lst = []
-        for switch in self.__switches:
-            if switch.control_type():
-                lst.append(switch.get_index())
-        return lst
+        return [
+            switch.get_index() for switch in self.__switches if switch.control_type()
+        ]
 
     ### information about state variables
     def get_number_state_variables(self):
@@ -240,23 +235,23 @@ class System:
     def initialize(self):
         # state variables
         self.__state_variables = self.__number_inductors + self.__number_capacitors
-        self.__inductors = [0 for dummy in range(self.__number_inductors)]
-        self.__capacitors = [0 for dummy in range(self.__number_capacitors)]
-        self.__initial_values = [0 for dummy in range(self.__state_variables)]
-        self.__state_variables_symbols = [0 for dummy in range(self.__state_variables)]
+        self.__inductors = [0 for _dummy in range(self.__number_inductors)]
+        self.__capacitors = [0 for _dummy in range(self.__number_capacitors)]
+        self.__initial_values = [0 for _dummy in range(self.__state_variables)]
+        self.__state_variables_symbols = [0 for _dummy in range(self.__state_variables)]
 
         # sources
         self.__number_independent_sources = (
             self.__number_voltage_sources + self.__number_current_sources
         )
         self.__sources_symbols = [
-            0 for dummy in range(self.__number_independent_sources)
+            0 for _dummy in range(self.__number_independent_sources)
         ]
         self.__independent_sources = [
-            0 for dummy in range(self.__number_independent_sources)
+            0 for _dummy in range(self.__number_independent_sources)
         ]
         self.__sources_values = [
-            0 for dummy in range(self.__number_independent_sources)
+            0 for _dummy in range(self.__number_independent_sources)
         ]
 
         self.__total_number_equations = (
