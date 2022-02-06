@@ -1,1 +1,0 @@
-This folder contains the functions generated with casadi.
