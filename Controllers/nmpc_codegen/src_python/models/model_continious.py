@@ -2,14 +2,25 @@ from . import model as m
 from . import integrators as ig
 import numpy as np
 
+
 class Model_continious(m.Model):
-    """"
+    """ "
     A contious model describing the system behavior
        - The same as a model, but the user provides a continue model and
        the name of an integrator to discretize it
     """
-    def __init__(self, system_equations, system_equations_period, constraint_input, number_of_states, \
-                 number_of_inputs, frequency, number_of_steps, integrator = None):
+
+    def __init__(
+        self,
+        system_equations,
+        system_equations_period,
+        constraint_input,
+        number_of_states,
+        number_of_inputs,
+        frequency,
+        number_of_steps,
+        integrator=None,
+    ):
         """
         Constructor Model
 
@@ -27,15 +38,22 @@ class Model_continious(m.Model):
         ------
         Nothing
         """
-        super(Model_continious,self).__init__(system_equations, system_equations_period, constraint_input, \
-             number_of_states, number_of_inputs, frequency, number_of_steps)
-        self._integrator = integrator  
-#        self._system = system
-        
+        super(Model_continious, self).__init__(
+            system_equations,
+            system_equations_period,
+            constraint_input,
+            number_of_states,
+            number_of_inputs,
+            frequency,
+            number_of_steps,
+        )
+        self._integrator = integrator
 
-    def get_next_state(self, time, state, input, index = 0):
-        """ 
-        Obtain the next state of the discrete system 
+    #        self._system = system
+
+    def get_next_state(self, time, state, input, index=0):
+        """
+        Obtain the next state of the discrete system
 
         Parameters
         ---------
@@ -44,25 +62,27 @@ class Model_continious(m.Model):
 
         Returns
         ------
-        Casadi array containing the next state 
+        Casadi array containing the next state
         """
-        system_equation = lambda state: \
-                          super(Model_continious, self).system_equations(state, input, index)
-        
-        if (self._integrator == None):
-#            return ig.integrator_explicit_euler(state, time, system_equation)
+        system_equation = lambda state: super(Model_continious, self).system_equations(
+            state, input, index
+        )
+
+        if self._integrator == None:
+            #            return ig.integrator_explicit_euler(state, time, system_equation)
             return ig.integrator_RK(state, time, system_equation)
-        else: 
+        else:
             return ig.integrator_RK_lib(state, time, system_equation, self._integrator)
-        
+
     def period_solution(self, state, input):
-        system_equation = lambda state: \
-                        super(Model_continious, self).system_equations_period(state, input)
+        system_equation = lambda state: super(
+            Model_continious, self
+        ).system_equations_period(state, input)
         return system_equation(state)
 
     def get_next_state_numpy(self, time, state, input, index):
-        """ 
-        Obtain the next state of the discrete system 
+        """
+        Obtain the next state of the discrete system
 
         Parameters
         ---------
@@ -71,10 +91,10 @@ class Model_continious(m.Model):
 
         Returns
         ------
-        Numpy array containing the next state 
+        Numpy array containing the next state
         """
-        number_of_state = super(Model_continious,self).number_of_states
-        new_state = np.zeros((number_of_state,1))
+        number_of_state = super(Model_continious, self).number_of_states
+        new_state = np.zeros((number_of_state, 1))
 
         state_casadi = self.get_next_state(time, state, input, index)
         for j in range(0, number_of_state):
@@ -87,12 +107,7 @@ class Model_continious(m.Model):
         Get or set the integrator keyname
         """
         return self._integrator
+
     @integrator.setter
     def integrator(self, value):
         self._integrator = value
-        
-    
-        
-    
-        
-        

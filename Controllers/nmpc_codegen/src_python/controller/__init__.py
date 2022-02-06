@@ -1,4 +1,4 @@
-#from .obstacles import *
+# from .obstacles import *
 from .constraints import *
 from .globals_generator import Globals_generator
 from .nmpc_panoc import Nmpc_panoc
