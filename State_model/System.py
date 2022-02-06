@@ -46,6 +46,12 @@ class System:
         self.__independent_sources = []
         self.__sources_values = []
 
+    def __enter__:
+        return self
+
+    def __exit__:
+        pass
+
     #####################################################################################################################################
     # get information
     def get_number_switches(self):
