@@ -8,3 +8,4 @@ examples/state_variables.pdf
 __pycache__/
 *.py[cod]
 *$py.class
+.env
