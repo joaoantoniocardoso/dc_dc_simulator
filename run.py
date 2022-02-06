@@ -9,7 +9,6 @@ Created on Tue Jul 24 10:53:20 2018
 import os
 from datetime import datetime
 import time
-from datetime import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *

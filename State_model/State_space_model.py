@@ -10,8 +10,6 @@ import numpy as np
 # AFTER FORMING STATES PERFORMS TRANSITION CHECK AND INSERTS INFORMATION INSIDE STATES
 # USED FOR FURTHER SIMULATION
 
-import numpy as np
-
 
 class State_space_model:
     def __init__(self, system):
