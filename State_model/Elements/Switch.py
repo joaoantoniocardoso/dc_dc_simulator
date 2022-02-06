@@ -9,8 +9,7 @@ class Switch(Element):
     """
 
     def __init__(self, index, type_sw, node1, node2, function1=0, function2=0):
-        self._cd_symbol = cd.SX.sym("SW" + str(index))
-        self._symbol = sympify("SW" + str(index))
+        self._symbol = sym.sympify("SW" + str(index))
         self._type = type_sw
         Element.__init__(self, index, node1, node2, 1)
 

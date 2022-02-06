@@ -450,35 +450,35 @@ def element_in_cutset(node_index, cutset):
 # class used for forming loop
 class Tree:
     def __init__(self, element, node, root):
-        self.__root = root
-        self.__element = element
-        self.__node = node
-        self.__subelements = []
+        self._root = root
+        self._element = element
+        self._node = node
+        self._subelements = []
 
     def __str__(self):
         string = (
             "root "
-            + str(self.__root)
+            + str(self._root)
             + " element "
-            + str(self.__element.get_symbol())
+            + str(self._element.get_symbol())
             + " subelements "
         )
-        for i in range(len(self.__subelements)):
-            string += str(self.__subelements[i].get_symbol())
+        for i in range(len(self._subelements)):
+            string += str(self._subelements[i].get_symbol())
             string += ", "
         return string
 
     def add_subelement(self, element):
-        self.__subelements.append(element)
+        self._subelements.append(element)
 
     def get_root(self):
-        return self.__root
+        return self._root
 
     def get_element(self):
-        return self.__element
+        return self._element
 
     def get_node(self):
-        return self.__node
+        return self._node
 
 
 def form_loops(nodes, node_collection):

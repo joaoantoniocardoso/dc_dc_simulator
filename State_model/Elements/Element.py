@@ -1,6 +1,5 @@
-import sys
-from sympy import *
-import casadi as cd
+# import sys
+import sympy as sym
 
 
 class Element:
@@ -46,9 +45,6 @@ class Element:
     def get_symbol(self):
         return self._symbol
 
-    def get_cd_symbol(self):
-        return self._cd_symbol
-
     def get_current_direction(self, node):
         if node == self._node1:
             return 1
@@ -70,6 +66,3 @@ class Element:
 
     def write_matrix_valued(self, matrix, number_equations, index):
         self._write_matrix(matrix, number_equations, index, self._value)
-
-    def write_matrix_symbolic_cd(self, matrix, number_equation, index):
-        self._write_matrix(matrix, number_equations, indel, self._symbol_cd)

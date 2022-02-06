@@ -7,8 +7,7 @@ class Resistor(Element):
     """
 
     def __init__(self, index, node1, node2, value):
-        self._cd_symbol = cd.SX.sym("R" + str(index))
-        self._symbol = sympify("R" + str(index))
+        self._symbol = sym.sympify("R" + str(index))
         Element.__init__(self, index, node1, node2, value)
 
     def _write_matrix(self, A, number_equations, index, value):

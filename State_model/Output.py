@@ -1,12 +1,12 @@
 class Output:
     def __init__(self):
-        self.__indexes = []
+        self._indexes = []
 
     def add_index(self, index):
-        self.__indexes.append(index)
+        self._indexes.append(index)
 
     def get_indexes(self):
-        return self.__indexes
+        return self._indexes
 
     def get_number(self):
-        return len(self.__indexes)
+        return len(self._indexes)

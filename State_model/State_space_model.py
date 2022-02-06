@@ -1,8 +1,7 @@
 from . import check_state
 from .State import *
 
-from sympy import *
-import casadi as cd
+import sympy as sym
 import numpy as np
 
 # GETS SYSTEM INFORMATION AND FORMS ALL STATES ACCORDING TO ALGORITHM BY THE USE OF THE FUNCTIONS INSIDE check_state
@@ -19,91 +18,86 @@ class State_space_model:
         elements = system.get_elements()
         nodes = system.get_nodes()
 
-        self.__system = system
+        self._system = system
 
-        self.__loop_nodes = []
-        self.__all_loops = check_state.form_loops(nodes, self.__loop_nodes)
-        self.__cutset_nodes = check_state.form_cutset_nodes(
+        self._loop_nodes = []
+        self._all_loops = check_state.form_loops(nodes, self._loop_nodes)
+        self._cutset_nodes = check_state.form_cutset_nodes(
             nodes[1:]
         )  # important for current direction
-        self.__all_cutsets = check_state.form_cutsets(self.__cutset_nodes)
+        self._all_cutsets = check_state.form_cutsets(self._cutset_nodes)
 
-        self.__dicm_nodes = []
-        self.__dcvm_nodes = []
-        self.__dicm_cutsets = check_state.find_dicm_cutsets(
-            self.__all_cutsets, self.__cutset_nodes, self.__dicm_nodes
+        self._dicm_nodes = []
+        self._dcvm_nodes = []
+        self._dicm_cutsets = check_state.find_dicm_cutsets(
+            self._all_cutsets, self._cutset_nodes, self._dicm_nodes
         )
-        self.__dcvm_loops = check_state.find_dcvm_loops(
-            self.__all_loops, self.__loop_nodes, self.__dcvm_nodes
+        self._dcvm_loops = check_state.find_dcvm_loops(
+            self._all_loops, self._loop_nodes, self._dcvm_nodes
         )
 
-        self.__current_cutsets = check_state.find_current_cutsets(self.__all_cutsets)
-        self.__voltage_loops = check_state.find_voltage_loops(self.__all_loops)
+        self._current_cutsets = check_state.find_current_cutsets(self._all_cutsets)
+        self._voltage_loops = check_state.find_voltage_loops(self._all_loops)
 
-        self.__dicm_inductors = check_state.get_dicm_inductors(self.__dicm_cutsets)
-        self.__dcvm_capacitors = check_state.get_dcvm_capacitors(self.__dcvm_loops)
+        self._dicm_inductors = check_state.get_dicm_inductors(self._dicm_cutsets)
+        self._dcvm_capacitors = check_state.get_dcvm_capacitors(self._dcvm_loops)
 
-        self.__beginning_state = None
+        self._beginning_state = None
 
     def form_states(self):
         """
         forms list of possible states of switches and performs all checks for the possibility of state
         """
-        self.__state_indexes = []
+        self._state_indexes = []
 
-        for i in range(2 ** self.__system.get_number_switches()):
+        for i in range(2 ** self._system.get_number_switches()):
             if (
                 check_state.check_control_scheme(
-                    self.__system.get_controlled_switches(),
-                    self.__system.get_on_state_switches(),
-                    self.__system.get_off_state_switches(),
+                    self._system.get_controlled_switches(),
+                    self._system.get_on_state_switches(),
+                    self._system.get_off_state_switches(),
                     i,
                 )
                 and not (
-                    check_state.check_voltage_loops(i, self.__voltage_loops)
-                    or check_state.check_current_cutsets(i, self.__current_cutsets)
+                    check_state.check_voltage_loops(i, self._voltage_loops)
+                    or check_state.check_current_cutsets(i, self._current_cutsets)
                 )
-                and check_state.check_dicm_cutset(self.__dicm_cutsets, i)
+                and check_state.check_dicm_cutset(self._dicm_cutsets, i)
             ):
-                self.__state_indexes.append(i)
+                self._state_indexes.append(i)
 
     def form_state_lists(self):
         """
         for possible states forms objects and puts matrices and transition information inside
         """
-        self.__states = []
-        independent_sources = np.array(self.__system.get_source_values())
-        for state in self.__state_indexes:
+        self._states = []
+        independent_sources = np.array(self._system.get_source_values())
+        for state in self._state_indexes:
             self.form_state(state)
         self.form_transitions()
 
-        for state in self.__states:
+        for state in self._states:
             state.define_control_value(independent_sources)
 
     def form_state(self, state_index):
         state = State(state_index)
 
         # adding control type
-        dicm = check_state.is_dicm(state_index, self.__dicm_nodes, self.__dicm_cutsets)
-        dcvm = check_state.is_dcvm(state_index, self.__dcvm_nodes, self.__dcvm_loops)
+        dicm = check_state.is_dicm(state_index, self._dicm_nodes, self._dicm_cutsets)
+        dcvm = check_state.is_dcvm(state_index, self._dcvm_nodes, self._dcvm_loops)
 
         # adding matrices
         state_variables = (
-            self.__system.get_number_state_variables()
+            self._system.get_number_state_variables()
         )  # number of state variables
-        state_variables_position = self.__system.get_state_variables_position()
-        independent_sources = self.__system.get_number_independent_sources()
-        number_outputs = self.__system.get_number_outputs()
-        output_indexes = self.__system.get_output_indexes()
-        number_equations = self.__system.get_number_equations()
+        state_variables_position = self._system.get_state_variables_position()
+        independent_sources = self._system.get_number_independent_sources()
+        number_outputs = self._system.get_number_outputs()
+        output_indexes = self._system.get_output_indexes()
+        number_equations = self._system.get_number_equations()
 
-        state_variables_symbols = self.__system.get_state_variables_symbols()
-        independent_sources_symbols = self.__system.get_source_symbols()
-
-        matrix_A_cd = cd.SX(state_variables, state_variables)
-        matrix_B_cd = cd.SX(state_variables, 1)
-        matrix_C_cd = cd.SX(number_outputs, state_variables)
-        matrix_D_cd = cd.SX(number_outputs, independent_sources)
+        state_variables_symbols = self._system.get_state_variables_symbols()
+        independent_sources_symbols = self._system.get_source_symbols()
 
         matrix_A = [
             [0 for dummy_i in range(state_variables)]
@@ -122,7 +116,7 @@ class State_space_model:
             for dummy_j in range(number_outputs)
         ]
 
-        matrix = Matrix(
+        matrix = sym.Matrix(
             [
                 [0 for dummy_i in range(number_equations + 1)]
                 for dummy_j in range(number_equations)
@@ -132,7 +126,7 @@ class State_space_model:
         # if DICM occurs, add an extra equation and set change of symbol inside one inductor
         if dicm[0] or dicm[1]:
             if dicm[0]:
-                voltage_sources = self.__system.get_number_voltage_sources()
+                voltage_sources = self._system.get_number_voltage_sources()
                 for element in dicm[3]:
                     for index in range(len(element)):
                         element[index] = sign(element[index]) * (
@@ -141,13 +135,13 @@ class State_space_model:
                     state.add_control(["dicm", dicm[2], dicm[3]])
 
             for line in dicm[2]:
-                self.__system.set_dicm(abs(line[0]), line)
+                self._system.set_dicm(abs(line[0]), line)
                 if len(line) > 1:
                     new_row = Matrix([[0 for dummy in range(number_equations + 1)]])
                     for element in line:
                         new_row[
                             0,
-                            self.__system.get_inductors()[
+                            self._system.get_inductors()[
                                 abs(element) - 1
                             ].get_position(),
                         ] = sign(element)
@@ -156,9 +150,9 @@ class State_space_model:
         # if DCVM occurs, set the change of symbol inside one capacitor
         if dcvm[0] or dcvm[1]:
             for line in dcvm[2]:
-                self.__system.set_dcvm(abs(line[0]), line)
+                self._system.set_dcvm(abs(line[0]), line)
             if dcvm[0]:
-                inductors = self.__system.get_number_inductors()
+                inductors = self._system.get_number_inductors()
 
                 for element in dcvm[
                     2
@@ -169,11 +163,11 @@ class State_space_model:
                         )
                 state.add_control(["dcvm", dcvm[2], dcvm[3]])
 
-        for element in self.__system.get_elements():
+        for element in self._system.get_elements():
             #            element.write_matrix_symbolic(matrix, number_equations, state_index)
             element.write_matrix_valued(matrix, number_equations, state_index)
 
-        matrix = simplify(matrix.rref())
+        matrix = sym.simplify(matrix.rref())
         for i in matrix[1]:
             if (i >= state_variables_position) and (
                 i < (state_variables_position + state_variables)
@@ -238,41 +232,21 @@ class State_space_model:
                         )
 
         state.add_matrices(
-            np.array(matrix_A, dtype=float),
-            np.array(matrix_B, dtype=float),
-            np.array(matrix_C, dtype=float),
-            np.array(matrix_D, dtype=float),
-        )  # adding numpy state matrices
-        state.calculate_eigenvalues()
-
-        # forming matrices in CASADI
-        independent_sources_values = self.__system.get_independent_sources()
-        matrix_B_1 = np.matmul(
-            np.array(matrix_B, dtype=float),
-            np.array(independent_sources_values, dtype=float),
+            matrix_A,
+            matrix_B,
+            matrix_C,
+            matrix_D,
         )
-        for i in range(state_variables):
-            for j in range(state_variables):
-                matrix_A_cd[i, j] = float(matrix_A[i][j])
-                matrix_B_cd[i] = float(matrix_B_1[i])
-        if number_outputs > 1:
-            for i in range(number_outputs):
-                for j in range(state_variables):
-                    matrix_C_cd[i][j] = float(matrix_C[i][j])
-                for j in range(independent_sources):
-                    matrix_D_cd[i][j] = float(matrix_D[i][j])
 
-        state.add_matrices_cd(
-            matrix_A_cd, matrix_B_cd, matrix_C_cd, matrix_D_cd
-        )  # adding state matrices in CASADI format
-        state.add_independent_sources(independent_sources_values)
-        self.__states.append(state)
+        state.add_independent_sources(self._system.get_independent_sources())
+
+        self._states.append(state)
 
     def find_state(self, code):
         """
         finds state with given state of the switches
         """
-        for state in self.__states:
+        for state in self._states:
             if state.get_index() == code:
                 return state
         return None
@@ -281,33 +255,33 @@ class State_space_model:
         """
         print states
         """
-        for state in self.__states:
+        for state in self._states:
             print(str(state))
 
     def get_states(self):
         """
         get states
         """
-        return self.__states
+        return self._states
 
     def get_beginning_state(self):
-        return self.__beginning_state
+        return self._beginning_state
 
     def get_state_number(self):
-        return len(self.__states)
+        return len(self._states)
 
     def form_transitions(self):
         """
         form transitions
         """
         if check_state.is_Qn_PWM(
-            self.__all_loops,
-            self.__all_cutsets,
-            self.__dcvm_capacitors,
-            self.__dicm_inductors,
-            self.__system.get_controlled_switches(),
+            self._all_loops,
+            self._all_cutsets,
+            self._dcvm_capacitors,
+            self._dicm_inductors,
+            self._system.get_controlled_switches(),
         ):
-            for state in self.__states:
+            for state in self._states:
                 if state.get_index() == 0:
                     state.add_next_state(self.find_01_state())
                 elif state.get_index() == 1:
@@ -315,7 +289,7 @@ class State_space_model:
                     state.add_control(["dcvmoff", None])
                     state.add_next_state(self.find_state(2))
                     state.add_next_state(self.find_state(3))
-                    self.__beginning_state = state
+                    self._beginning_state = state
                 elif state.get_index() == 2:
                     state.add_control(["control", None])
                     state.add_next_state(self.find_state(3))
@@ -335,22 +309,22 @@ class State_space_model:
                 print("01 -> 11 -> 10 -> 00")
 
         elif check_state.is_Qf_PWM(
-            self.__all_loops,
-            self.__all_cutsets,
-            self.__dcvm_capacitors,
-            self.__dicm_inductors,
-            self.__system.get_controlled_switches(),
+            self._all_loops,
+            self._all_cutsets,
+            self._dcvm_capacitors,
+            self._dicm_inductors,
+            self._system.get_controlled_switches(),
         ):
             pass
 
         elif check_state.is_ZV_QSW(
-            self.__all_loops,
-            self.__dcvm_capacitors,
-            self.__system.get_on_state_switches(),
+            self._all_loops,
+            self._dcvm_capacitors,
+            self._system.get_on_state_switches(),
         ):
             controlled = bin(
-                self.__system.get_on_state_switches()
-                | self.__system.get_off_state_switches()
+                self._system.get_on_state_switches()
+                | self._system.get_off_state_switches()
             ).count("1")
             print(
                 "This is quasi-resonant converter of type ZV-QSW and possible transitions are:"
@@ -358,7 +332,7 @@ class State_space_model:
             print("01 -> 00")
             print("01 -> 00 -> 10 -> 00")
 
-            for state in self.__states:
+            for state in self._states:
                 if state.get_index() == 0:
                     state.add_control(["control", None])
                     state.add_next_state(self.find_state(1))
@@ -374,32 +348,32 @@ class State_space_model:
                         self.find_state(0).add_off_control(
                             self.find_state(2).get_control()
                         )
-                        self.__beginning_state = state
+                        self._beginning_state = state
                 elif state.get_index() == 2:
                     state.add_next_state(self.find_state(0))
                     state.add_next_state(self.find_state(1))
 
         elif check_state.is_ZC_QSW(
-            self.__all_cutsets,
-            self.__dicm_inductors,
-            self.__system.get_controlled_switches(),
+            self._all_cutsets,
+            self._dicm_inductors,
+            self._system.get_controlled_switches(),
         ):
             pass
 
         elif check_state.is_ZV(
-            self.__all_loops,
-            self.__all_cutsets,
-            self.__system.get_controlled_switches(),
+            self._all_loops,
+            self._all_cutsets,
+            self._system.get_controlled_switches(),
         ):
             controlled = bin(
-                self.__system.get_on_state_switches()
-                | self.__system.get_off_state_switches()
+                self._system.get_on_state_switches()
+                | self._system.get_off_state_switches()
             ).count("1")
             print("This is quasi resonant ZV and possible transitions are:")
             if controlled == 1:
                 print("11 -> 10")
                 print("11 -> 01 -> 00 -> 10")
-                for state in self.__states:
+                for state in self._states:
                     if state.get_index() == 0:
                         state.add_next_state(self.find_state(2))
                         state.add_control(["control", None])
@@ -412,19 +386,19 @@ class State_space_model:
                         state.add_control(["control", None])
                         state.add_next_state(self.find_state(1))
                         state.add_next_state(self.find_state(2))
-                        self.__beginning_state = state
+                        self._beginning_state = state
 
         elif check_state.is_ZC(
-            self.__all_loops,
-            self.__all_cutsets,
-            self.__system.get_controlled_switches(),
+            self._all_loops,
+            self._all_cutsets,
+            self._system.get_controlled_switches(),
         ):
             pass
 
         else:
             print("This is PWM converter with possible transitions:")
             print("01 -> 10")
-            for state in self.__states:
+            for state in self._states:
                 if state.get_index() == 0:
                     state.add_next_state(self.find_state(1))
                     self.find_state(2).add_next_state(state)
@@ -432,7 +406,7 @@ class State_space_model:
                 elif state.get_index() == 1:
                     state.add_next_state(self.find_state(2))
                     state.add_control(["control", None])
-                    self.__beginning_state = state
+                    self._beginning_state = state
                 elif state.get_index() == 2:
                     state.add_next_state(self.find_state(1))
                     state.add_control(["control", None])
@@ -448,7 +422,7 @@ class State_space_model:
         """
         steady state for switching circuit
         """
-        independent_sources = self.__system.get_independent_sources()
+        independent_sources = self._system.get_independent_sources()
         if marker == "CCM":
             (A1, B1, C1, D1) = self.find_state(1).get_matrices()
             (A2, B2, C2, D2) = self.find_state(2).get_matrices()
@@ -490,9 +464,9 @@ class State_space_model:
         """
         rippler in steady state for switching circuit
         """
-        independent_sources = self.__system.get_independent_sources()
+        independent_sources = self._system.get_independent_sources()
         if marker == "CCM":
-            (A, B, C, D) = self.__beginning_state.get_matrices()
+            (A, B, C, D) = self._beginning_state.get_matrices()
             delta = (
                 (np.matmul(A, equilibrium) + np.matmul(B, independent_sources))
                 * duty_ratio[0]

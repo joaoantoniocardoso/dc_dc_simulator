@@ -7,8 +7,7 @@ class Voltage_source(Element):
     """
 
     def __init__(self, index, node1, node2, value):
-        self._cd_symbol = cd.SX.sym("V" + str(index))
-        self._symbol = sympify("V" + str(index))
+        self._symbol = sym.sympify("V" + str(index))
         Element.__init__(self, index, node1, node2, value)
 
     def _write_matrix(self, A, number_equations, index, value):
