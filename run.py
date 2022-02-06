@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import *
 from ast import literal_eval
 
 from State_model import *
-from Controllers import *
+#from Controllers import *
 from parser import *
 
 model = System()

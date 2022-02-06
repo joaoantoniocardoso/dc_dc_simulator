@@ -1,5 +1,4 @@
 from State_model import *
-from Controllers import *
 
 file_name = "./examples/state_variables.npy"
 log_file_name = "./examples/log.txt"
@@ -40,9 +39,6 @@ model.set_control(2, "off_state")
 model.set_output([["node", 4]])
 model.initialize()
 model.initialise_output()
-# controller = Controller_pid.Controller([1], [2],\
-#   'pole_zero_matching', [[[2.829e-06,0.02847,61.51], [7.013e-06,1, 0], 14.28]], 50e3)
-
 
 frequency = 1e3
 duty_ratio = [0.4]
